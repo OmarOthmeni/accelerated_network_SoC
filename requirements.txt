@@ -1,0 +1,10 @@
+tensorflow==2.13.1 
+numpy==1.24.3 
+matplotlib==3.10.8 
+scikit-learn==1.7.2 
+seaborn==0.13.2 
+pandas==2.3.3 
+Pillow==12.1.0 
+opencv-python==4.8.1.78 
+jupyter==1.1.1 
+imbalanced-learn==0.11.0 

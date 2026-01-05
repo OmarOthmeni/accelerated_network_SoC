@@ -8,3 +8,17 @@ wheels/
 
 # Virtual environments
 .venv
+
+# System files
+xcopy
+
+# Virtual environment
+uv.lock
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class

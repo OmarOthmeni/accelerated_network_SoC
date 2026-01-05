@@ -1,0 +1,25 @@
+class,precision,recall,f1_score,support
+apxs,1.00,0.58,0.74,12
+apxs cal target,1.00,1.00,1.00,5
+chemcam cal target,0.67,0.33,0.44,6
+chemin inlet open,0.96,1.00,0.98,27
+drill,0.59,1.00,0.74,10
+drill holes,0.96,0.96,0.96,77
+drt front,0.91,0.91,0.91,11
+drt side,0.93,1.00,0.96,25
+ground,0.87,0.99,0.92,404
+horizon,0.94,0.30,0.45,57
+inlet,1.00,0.88,0.94,43
+mahli,1.00,0.60,0.75,5
+mahli cal target,1.00,0.79,0.88,19
+mastcam,0.90,0.82,0.86,11
+mastcam cal target,1.00,1.00,1.00,24
+observation tray,0.93,0.78,0.85,18
+portion box,0.67,1.00,0.80,14
+portion tube,1.00,1.00,1.00,22
+portion tube opening,1.00,1.00,1.00,4
+nems uv sensor,1.00,0.64,0.78,11
+rover rear deck,0.67,0.83,0.74,12
+scoop,0.83,1.00,0.91,30
+turret,1.00,0.90,0.95,30
+wheel,0.98,0.91,0.95,151

@@ -1,0 +1,25 @@
+Class,Accuracy,Samples,Status
+apxs,0.5833333333333334,12,Problematic
+apxs cal target,1.0,5,Good
+chemcam cal target,0.3333333333333333,6,Problematic
+chemin inlet open,1.0,27,Good
+drill,1.0,10,Good
+drill holes,0.961038961038961,77,Good
+drt front,0.9090909090909091,11,Good
+drt side,1.0,25,Good
+ground,0.9851485148514851,404,Good
+horizon,0.2982456140350877,57,Problematic
+inlet,0.8837209302325582,43,Good
+mahli,0.6,5,Needs Improvement
+mahli cal target,0.7894736842105263,19,Needs Improvement
+mastcam,0.8181818181818182,11,Good
+mastcam cal target,1.0,24,Good
+observation tray,0.7777777777777778,18,Needs Improvement
+portion box,1.0,14,Good
+portion tube,1.0,22,Good
+portion tube opening,1.0,4,Good
+rems uv sensor,0.6363636363636364,11,Needs Improvement
+rover rear deck,0.8333333333333334,12,Good
+scoop,1.0,30,Good
+turret,0.9,30,Good
+wheel,0.9139072847682119,151,Good
