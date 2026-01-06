@@ -52,7 +52,7 @@ accelerated_network_SoC/
 └── requirements.txt
 
 
-## Quick Start
+Quick Start
 1. Activate your virtual environment
 venv\Scripts\activate   # Windows
 source venv/bin/activate  # Linux / Mac
@@ -66,7 +66,8 @@ python scripts/train_baseline.py
 4. Evaluate the baseline model
 python scripts/evaluate_baseline.py
 
-## Dataset Statistics
+Dataset Statistics
+
 Total Classes: 24
 
 Image Size: 64×64 grayscale
@@ -77,7 +78,8 @@ Test Images: 1028
 
 Class Distribution: Highly imbalanced (15 to 1878 samples)
 
-## Dependencies
+Dependencies
+
 See requirements.txt for the full list
 
 Python 3.10+ recommended
