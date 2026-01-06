@@ -1,4 +1,4 @@
-## 🎯 Baseline CNN Implementation (Collaborator: Donia)
+## Baseline CNN Implementation (Collaborator: Donia)
 
 ### Overview
 Implemented a minimal CNN achieving **90.47% test accuracy** on 24-class Mars rover instrument classification.
@@ -21,14 +21,14 @@ Implemented a minimal CNN achieving **90.47% test accuracy** on 24-class Mars ro
 ## Project Overview
 Classification of 24 types of Martian rover images using deep learning.
 
-## 📊 Baseline Results (Minimal CNN)
+##  Baseline Results (Minimal CNN)
 - **Test Accuracy**: 90.47%
 - **Model Size**: 1.56 MB
 - **Training Time**: ~15 seconds per epoch
 - **Best Class**: apxs cal target (100%)
 - **Worst Class**: chemcam cal target (33%)
 
-## 🏗️ Project Structure
+##  Project Structure
 accelerated_network_SoC/
 ├── data/ # Dataset
 │ ├── train/ # Training images (24 classes)
@@ -52,7 +52,7 @@ accelerated_network_SoC/
 └── requirements.txt # Dependencies
 
 
-## 🚀 Quick Start
+##  Quick Start
 ```bash
 # 1. Activate virtual environment
 venv\Scripts\activate
