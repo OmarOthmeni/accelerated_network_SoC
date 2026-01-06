@@ -2,6 +2,8 @@
 
 **Collaborator:** Donia Mabrouk
 
+---
+
 ## Project Overview
 This project uses **Convolutional Neural Networks (CNNs)** to classify images captured by **NASA Mars rovers**. The model learns to recognize **terrain, rocks, and other Martian features** from **64×64 grayscale images**. It provides a **lightweight baseline CNN** with a full **training and evaluation workflow**, designed for **reproducible experimentation, future optimization, and embedded AI deployment** on **GPU and FPGA/SoC hardware**.
 
@@ -51,11 +53,10 @@ accelerated_network_SoC/
 
 
 ## Quick Start
-
-### 1. Activate your virtual environment
-```bash
+1. Activate your virtual environment
 venv\Scripts\activate   # Windows
 source venv/bin/activate  # Linux / Mac
+
 2. Install dependencies
 pip install -r requirements.txt
 
@@ -65,8 +66,7 @@ python scripts/train_baseline.py
 4. Evaluate the baseline model
 python scripts/evaluate_baseline.py
 
-Dataset Statistics
-
+## Dataset Statistics
 Total Classes: 24
 
 Image Size: 64×64 grayscale
@@ -77,8 +77,7 @@ Test Images: 1028
 
 Class Distribution: Highly imbalanced (15 to 1878 samples)
 
-Dependencies
-
-See requirements.txt for full list
+## Dependencies
+See requirements.txt for the full list
 
 Python 3.10+ recommended
