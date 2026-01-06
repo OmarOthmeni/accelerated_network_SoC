@@ -28,22 +28,21 @@ This project uses **Convolutional Neural Networks (CNNs)** to classify images ca
 ---
 
 ## Project Structure
-```text
 accelerated_network_SoC/
 ├── data/
-│   ├── train/        # Training images (24 classes)
-│   └── test/         # Test images
+│ ├── train/ # Training images (24 classes)
+│ └── test/ # Test images
 ├── models/
-│   ├── baseline/     # minimal_cnn.h5 (90.47% accuracy)
-│   ├── optimized/    # Future optimized models
-│   └── transfer_learning/ 
+│ ├── baseline/ # minimal_cnn.h5 (90.47% accuracy)
+│ ├── optimized/ # Future optimized models
+│ └── transfer_learning/
 ├── results/
-│   ├── baseline/     # Baseline evaluation
-│   ├── optimized/
-│   └── comparisons/
+│ ├── baseline/ # Baseline evaluation
+│ ├── optimized/
+│ └── comparisons/
 ├── scripts/
-│   ├── train_baseline.py
-│   └── evaluate_baseline.py
+│ ├── train_baseline.py
+│ └── evaluate_baseline.py
 ├── utils/
 ├── notebooks/
 ├── training/
