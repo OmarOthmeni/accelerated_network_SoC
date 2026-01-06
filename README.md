@@ -28,22 +28,21 @@ This project uses **Convolutional Neural Networks (CNNs)** to classify images ca
 ---
 
 ## Project Structure
-```text
 accelerated_network_SoC/
 ├── data/
-│   ├── train/        # Training images (24 classes)
-│   └── test/         # Test images
+│ ├── train/ # Training images (24 classes)
+│ └── test/ # Test images
 ├── models/
-│   ├── baseline/     # minimal_cnn.h5 (90.47% accuracy)
-│   ├── optimized/    # Future optimized models
-│   └── transfer_learning/ 
+│ ├── baseline/ # minimal_cnn.h5 (90.47% accuracy)
+│ ├── optimized/ # Future optimized models
+│ └── transfer_learning/
 ├── results/
-│   ├── baseline/     # Baseline evaluation
-│   ├── optimized/
-│   └── comparisons/
+│ ├── baseline/ # Baseline evaluation
+│ ├── optimized/
+│ └── comparisons/
 ├── scripts/
-│   ├── train_baseline.py
-│   └── evaluate_baseline.py
+│ ├── train_baseline.py
+│ └── evaluate_baseline.py
 ├── utils/
 ├── notebooks/
 ├── training/
@@ -51,23 +50,27 @@ accelerated_network_SoC/
 ├── config.py
 └── requirements.txt
 
+text
 
-Quick Start
-1. Activate your virtual environment
-venv\Scripts\activate   # Windows
-source venv/bin/activate  # Linux / Mac
+## Quick Start
 
-2. Install dependencies
+1. **Activate your virtual environment**
+   ```bash
+   venv\Scripts\activate  # Windows
+   source venv/bin/activate  # Linux / Mac
+Install dependencies
+
+bash
 pip install -r requirements.txt
+Train the baseline model
 
-3. Train the baseline model
+bash
 python scripts/train_baseline.py
+Evaluate the baseline model
 
-4. Evaluate the baseline model
+bash
 python scripts/evaluate_baseline.py
-
 Dataset Statistics
-
 Total Classes: 24
 
 Image Size: 64×64 grayscale
@@ -79,7 +82,6 @@ Test Images: 1028
 Class Distribution: Highly imbalanced (15 to 1878 samples)
 
 Dependencies
-
 See requirements.txt for the full list
 
 Python 3.10+ recommended
