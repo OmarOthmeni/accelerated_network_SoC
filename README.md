@@ -1,81 +1,59 @@
-##  Baseline CNN Implementation (Collaborator: Donia)
+# Accelerated Network SoC — Mars Rover Image Classification on an FPGA
 
-### Overview
-Implemented a minimal CNN achieving **90.47% test accuracy** on 24-class Mars rover instrument classification.
+Classify 64×64 grayscale images from NASA's Curiosity rover (MSL) into 24 classes (wheel, drill,
+ChemCam calibration target, horizon, …), then run the network on a **Zynq-7020 FPGA** as an
+INT8 hardware accelerator.
 
-### Key Contributions:
-1. **Data Analysis**: Explored 24 classes with 64x64 grayscale images
-2. **Model Architecture**: 2 Conv layers + 2 Dense layers (407,832 params)
-3. **Training Pipeline**: Scripted training with validation (91% accuracy)
-4. **Evaluation**: Comprehensive metrics, confusion matrix, per-class analysis
-5. **Documentation**: Clear results and reproducibility
+The repository has two parts:
 
-### Files Added:
-- `scripts/train_baseline.py` - Training script
-- `scripts/evaluate_baseline.py` - Evaluation script  
-- `models/baseline/minimal_cnn.h5` - Trained model
-- `results/baseline/` - All evaluation results
-- Updated documentation and configuration
-# Martian Rover Image Classification
+| Part | Folder | What it is | Test accuracy |
+|---|---|---|---|
+| **Software baseline** | `scripts/`, `models/`, `results/` | Keras CNN, 2 conv + 2 dense layers, 407,832 parameters (Donia Mabrouk) | 90.47% |
+| **Hardware accelerator** | [`accelerator/`](accelerator/) | Hardware-friendly CNN, INT8 quantization, Vitis HLS accelerator for PYNQ-Z1/Z2 (Omar Othmeni) | **97.28% (INT8)**, bit-exact in C simulation |
 
-## Project Overview
-Classification of 24 types of Martian rover images using deep learning.
+## Hardware accelerator (summary)
 
-##  Baseline Results (Minimal CNN)
-- **Test Accuracy**: 90.47%
-- **Model Size**: 1.56 MB
-- **Training Time**: ~15 seconds per epoch
-- **Best Class**: apxs cal target (100%)
-- **Worst Class**: chemcam cal target (33%)
+- **Network designed for the FPGA**: 4 × [conv 3×3 + ReLU + maxpool] (16/32/64/64 channels),
+  global average pooling, fully connected. 61,960 parameters, 12.4 M MACs per image.
+- **INT8 post-training quantization** with integer-only requantization (multiplier + shift per
+  channel); float32 97.67% → INT8 97.28% (98.00% balanced accuracy).
+- **HLS accelerator**: 72 MACs per cycle, fused conv/ReLU/maxpool, all weights in on-chip ROM,
+  AXI4 masters for images and logits, AXI4-Lite control.
+- **Verified bit-exact**: the HLS C++ kernel reproduces the Python integer model on all 1,028 test
+  images (0 of 24,672 logits differ).
+- **Next**: Vitis HLS synthesis, Vivado bitstream and PYNQ board measurements (throughput,
+  latency, power, resources). Scripts are in `accelerator/hls`, `accelerator/vivado`, `accelerator/pynq`.
 
-## Project Structure
-accelerated_network_SoC/
-├── data/ # Dataset
-│ ├── train/ # Training images (24 classes)
-│ └── test/ # Test images
-├── models/ # Saved models
-│ ├── baseline/ # minimal_cnn.h5 (90.47% accuracy)
-│ ├── optimized/ # Future optimized models
-│ └── transfer_learning/ # Transfer learning models
-├── results/ # Evaluation results
-│ ├── baseline/ # Baseline evaluation
-│ ├── optimized/ # Future optimized results
-│ └── comparisons/ # Model comparisons
-├── scripts/ # Python scripts
-│ ├── train_baseline.py # Train minimal CNN
-│ └── evaluate_baseline.py # Evaluate model
-├── utils/ # Utility functions
-├── notebooks/ # Jupyter notebooks
-├── training/ # Training logs/history
-├── evaluation/ # Evaluation metrics
-├── config.py # Project configuration
-└── requirements.txt # Dependencies
+Details, arithmetic and reproduction steps: [`accelerator/README.md`](accelerator/README.md).
 
+## Software baseline (Donia Mabrouk)
 
-##  Quick Start
+- 2 conv + 2 dense layers (407,832 parameters, 1.56 MB), Keras.
+- **Test accuracy 90.47%**; best class apxs cal target (100%), worst chemcam cal target (33%).
+- `scripts/train_baseline.py`, `scripts/evaluate_baseline.py`, model in `models/baseline/minimal_cnn.h5`,
+  evaluation in `results/baseline/`.
+
 ```bash
-# 1. Activate virtual environment
-venv\Scripts\activate
-
-# 2. Install dependencies
 pip install -r requirements.txt
-
-# 3. Train baseline model
 python scripts/train_baseline.py
-
-# 4. Evaluate baseline model
 python scripts/evaluate_baseline.py
+```
 
-📈 Dataset Statistics
-Total Classes: 24
+## Dataset
 
-Image Size: 64×64 grayscale
+- 24 classes, 64×64 grayscale; train 4,673 / validation 990 / test 1,028 images.
+- Highly imbalanced: 15 to 1,878 training images per class, so the accelerator also reports
+  balanced accuracy (mean per-class recall).
+- Built from the MSL Curiosity labeled image dataset (Lu & Wagstaff, NASA JPL) with its official
+  splits; `data/data_prepare.ipynb` shows the preparation.
 
-Training Images: ~4700
+## Repository layout
 
-Test Images: 1028
-
-Class Distribution: Highly imbalanced (15 to 1878 samples)
-
-🔧 Dependencies
-See requirements.txt for complete list.
+```
+data/          train / validation / test images (one folder per class)
+scripts/       Keras baseline training and evaluation
+models/        Keras baseline model
+results/       Keras baseline evaluation
+accelerator/   model/ (PyTorch + INT8 quantization), hls/ (accelerator + testbench),
+               vivado/ (Zynq overlay), pynq/ (on-board measurement)
+```

@@ -1,0 +1,11 @@
+# generated / large
+hls/data/
+hls/tb
+hls/cnn_prj/
+vivado/out/
+pynq/overlay/*.bit
+__pycache__/
+*.pyc
+.Xil/
+*.jou
+*.log

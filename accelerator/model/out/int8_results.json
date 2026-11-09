@@ -1,0 +1,9 @@
+{
+ "float_test_accuracy": 0.9766536964980544,
+ "float_test_balanced_accuracy": 0.980377731855245,
+ "int8_test_accuracy": 0.9727626459143969,
+ "int8_test_balanced_accuracy": 0.9799651906011196,
+ "float_int8_top1_agreement": 0.995136186770428,
+ "test_images": 1028,
+ "weights_int8": 61584
+}

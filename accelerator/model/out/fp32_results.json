@@ -1,0 +1,5 @@
+{
+ "test_accuracy": 0.9766536964980544,
+ "test_balanced_accuracy": 0.980377731855245,
+ "val_balanced_accuracy": 0.9631012476725074
+}
