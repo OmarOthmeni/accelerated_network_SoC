@@ -1,11 +1,12 @@
 # Vitis HLS: C simulation, synthesis, co-simulation (optional) and IP export.
-#   cd hls && vitis_hls -f run_hls.tcl
+#   cd hls && vitis-run --mode hls --tcl run_hls.tcl   (Vitis 2024.2+; older: vitis_hls -f run_hls.tcl)
+#   The project path must not contain spaces (DATA_DIR_RAW is passed unquoted).
 # Target: PYNQ-Z1 / PYNQ-Z2 (xc7z020clg400-1) at 100 MHz.
 
 open_project -reset cnn_prj
 set_top cnn_top
 add_files cnn.cpp -cflags "-I."
-add_files -tb tb.cpp -cflags "-I. -DDATA_DIR=\\\"[pwd]/data\\\""
+add_files -tb tb.cpp -cflags "-I. -DDATA_DIR_RAW=[pwd]/data"
 
 open_solution -reset sol1 -flow_target vivado
 set_part xc7z020clg400-1

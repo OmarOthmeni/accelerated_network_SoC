@@ -17,12 +17,14 @@ The repository has two parts:
   global average pooling, fully connected. 61,960 parameters, 12.4 M MACs per image.
 - **INT8 post-training quantization** with integer-only requantization (multiplier + shift per
   channel); float32 97.67% → INT8 97.28% (98.00% balanced accuracy).
-- **HLS accelerator**: 72 MACs per cycle, fused conv/ReLU/maxpool, all weights in on-chip ROM,
+- **HLS accelerator**: per-layer parallelism (36–72 MACs/cycle), fused conv/ReLU/maxpool, all weights in on-chip ROM,
   AXI4 masters for images and logits, AXI4-Lite control.
 - **Verified bit-exact**: the HLS C++ kernel reproduces the Python integer model on all 1,028 test
   images (0 of 24,672 logits differ).
-- **Next**: Vitis HLS synthesis, Vivado bitstream and PYNQ board measurements (throughput,
-  latency, power, resources). Scripts are in `accelerator/hls`, `accelerator/vivado`, `accelerator/pynq`.
+- **Placed and routed** (Vivado 2026.1, Artix-7, 7-series fabric like the Zynq-7020): the default
+  low-power build runs **36 images/s at 50 MHz on 7.3k LUT, 54 DSP, 0.165 W** (vectorless
+  estimate); a high-throughput build (compile-time option) reaches ≈ 448 images/s at 100 MHz.
+- **Next**: Vivado bitstream and PYNQ board measurements (post-route resources, throughput, power). Scripts are in `accelerator/hls`, `accelerator/vivado`, `accelerator/pynq`.
 
 Details, arithmetic and reproduction steps: [`accelerator/README.md`](accelerator/README.md).
 

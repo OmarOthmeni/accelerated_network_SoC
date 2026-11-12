@@ -13,7 +13,7 @@ Task: classify 64×64 grayscale images from NASA's Curiosity rover (MSL) into 24
 |---|---|---|---|
 | Float32 model (BatchNorm folded) | 97.67% | 98.04% | measured (PyTorch, 1,028 test images) |
 | INT8 integer model | **97.28%** | **98.00%** | measured (Python golden model) |
-| HLS kernel, C simulation | **97.28%, 0 / 24,672 logit mismatches** | — | measured (g++) |
+| HLS kernel, C simulation | **97.28%, 0 / 24,672 logit mismatches** | — | measured (g++ and Vitis HLS 2026.1 csim) |
 | On the PYNQ board | — | — | *to be measured* (`pynq/run_on_board.py`) |
 
 \*mean per-class recall; the dataset is very imbalanced (15 to 1,878 training images per class).
@@ -23,9 +23,52 @@ Float32 and INT8 agree on the predicted class for 99.51% of test images.
 |---|---|
 | Parameters (all INT8 weights, held in on-chip ROM) | 61,960 |
 | Operations per image | 12.4 M multiply-accumulates |
-| Parallelism | 8 output channels × 3×3 kernel = 72 MACs per cycle |
-| Ideal compute time (II = 1, 100 MHz, no loop overhead) | 172k cycles ≈ 1.7 ms → upper bound ≈ 580 images/s |
-| FPGA resources, Fmax, measured throughput and power | *pending Vivado run on hardware* |
+| Parallelism | 4 / 8 / 8 / 4 output channels × 3×3 kernel per layer (36–72 MACs per cycle) |
+| Default build (low power) | 1.39 M cycles per image → **≈ 36 images/s at 50 MHz**, 0.165 W total (post-route estimate) |
+| High-throughput build | 223,200 cycles per image → ≈ 448 images/s at 100 MHz |
+| Measured throughput and power on the board | *pending Vivado bitstream + PYNQ run* |
+
+### Low-power build: post-route results (default, `PO = 1/1/1/1`, 50 MHz)
+
+Vivado 2026.1 place-and-route on an Artix-7 xc7a100t-1 (same 7-series fabric as the Zynq-7020
+programmable logic), out of context. Reports in `reports/lowpower_artix7_50MHz/`.
+
+| | Value |
+|---|---|
+| Throughput | 1,386,331 cycles per image → **36 images/s at 50 MHz** (target: 30) |
+| Timing | met at 20 ns; 11.95 ns achieved post-route (≈ 84 MHz possible) |
+| LUT / FF | **7,251 / 5,055** (13.6% / 4.8% of a Zynq-7020) |
+| DSP | **54** (25% of a Zynq-7020) |
+| BRAM | 50.5 BRAM36 (36% of a Zynq-7020) |
+| Power (vectorless estimate, 25 °C) | **0.165 W total = 0.078 W dynamic + 0.087 W device static** |
+| Dynamic power by part | BRAM 0.024 · signals 0.019 · logic 0.015 · clocks 0.011 · DSP 0.008 W |
+| Energy per image | ≈ 2.2 mJ dynamic (≈ 4.6 mJ including static) |
+
+The power figure is Vivado's vectorless estimate (default switching activity, confidence
+"medium") for the accelerator alone: it excludes the ARM cores, DDR and AXI interconnect.
+The board measurement will replace it.
+
+Going from 3 to 4 cyclic banks for the 3×3 window buffers was the key change for this build:
+with power-of-two map sizes, bank = index & 3 and address = index >> 2, instead of /3 and %3
+address logic on 9 reads per cycle. In HLS estimates it cut DSP from 165 to 39 and LUT from
+48k to 24k at the same latency.
+
+### Synthesis results (Vitis HLS 2026.1, 100 MHz target)
+
+| | v1 (one pipeline per input-channel loop) | **v2 (rebalanced)** | Zynq-7020 budget |
+|---|---|---|---|
+| Cycles per image | 456,331 | **223,200 (2.04× faster)** | — |
+| Cycles per layer (L1 / L2 / L3 / L4) | 4k / 239k / … (layer 2 = 53%) | **16k / 66k / 66k / 66k** | — |
+| Estimated clock period | 7.30 ns | 7.30 ns (≈ 137 MHz possible) | 10 ns |
+| DSP | 426 | **192** | 220 |
+| BRAM18 | 222 | **124** | 280 |
+| LUT | 42,262 | **51,434** | 53,200 |
+| FF | 19,242 | 46,896 | 106,400 |
+
+v1 was synthesized for the Kria K26 (xck26) because it does not fit the Zynq-7020. v2 resource
+figures come from an Artix-7 xc7a100t, which has the same 7-series fabric as the Zynq-7020
+programmable logic (the xc7z020 device files were not installed); HLS LUT estimates are usually
+pessimistic compared with post-route results, which the Vivado run will confirm.
 
 ## Pipeline
 
@@ -60,9 +103,17 @@ no softmax on chip (argmax of int32 logits), BatchNorm folded into the weights.
 
 ### Accelerator architecture
 
-- All weights in on-chip ROMs; feature maps in BRAM (largest: 16×32×32 bytes).
-- Inner loop pipelined at II = 1 over input channels; each cycle reads a 3×3 window (buffers
-  cyclically partitioned by 3 on rows and columns) and updates 8 output-channel accumulators.
+- All weights in on-chip ROMs, reshaped so the 9 taps of each (output, input) channel pair are
+  one 72-bit word; feature maps in BRAM (largest: 16×32×32 bytes).
+- Each conv layer is one flat II = 1 pipeline over (pooled pixel, 2×2 sub-pixel, input channel),
+  so the pipeline never drains between pixels. Each cycle reads a 3×3 window (buffers cyclically
+  partitioned by 3 on rows and columns) and updates PO output-channel accumulators.
+- PO is chosen per layer (4, 8, 8, 4) so the four layers take about the same time.
+- Requantization (a 32×32-bit multiply, ~4 DSP) is time-shared: one unit per layer requantizes
+  the held accumulators of the previous sub-pixel, one channel per cycle, while the next
+  sub-pixel accumulates. Layer 1 (one input channel) requantizes its 4 channels in parallel.
+- Profiling v1 per layer showed layer 2 took 53% of the latency while layer 1 used 268 DSPs:
+  the rebalance halves the latency and cuts DSPs from 426 to 192 so the design fits the Zynq-7020.
 - AXI4 master ports for images (HP0) and logits (HP1); AXI4-Lite control (start, buffer
   addresses, number of images) so one call can process a whole batch.
 
@@ -80,7 +131,8 @@ NASA JPL; v2.1 on Zenodo) using its official train/validation/test split.
 
 Hardware (needs Vitis HLS + Vivado, and the PYNQ board files):
 ```bash
-cd hls && vitis_hls -f run_hls.tcl && cd ..        # csim, synthesis report, IP export
+cd hls && vitis-run --mode hls --tcl run_hls.tcl && cd ..   # csim, synthesis, IP export (Vitis 2024.2+;
+                                                          # older releases: vitis_hls -f run_hls.tcl)
 vivado -mode batch -source vivado/build_overlay.tcl   # bitstream + utilization/timing/power reports
 # copy pynq/ and hls/data/ to the board, then on the board:
 sudo python3 pynq/run_on_board.py --data hls/data
@@ -90,9 +142,10 @@ The ARM Cortex-A9 software baseline is the same C++ code compiled on the board:
 
 ## Next steps
 
-- Run synthesis and board measurements, and fill in resources, Fmax, images/s and W.
-- Remove the per-pixel loop overhead in layer 1 (only one input channel) and overlap the
-  layers with `DATAFLOW` across images.
+- Build the bitstream and measure on the PYNQ board: post-route resources, Fmax, images/s, W.
+- Overlap the layers with `DATAFLOW` across images (each layer is now ~66k cycles, so a layer
+  pipeline would approach 1 image per 66k cycles ≈ 1,500 images/s at 100 MHz).
+- Reduce LUTs in the window muxes (line buffers instead of 3×3 cyclic banks).
 - Quantization-aware training and INT4 weights.
 
 *Omar Othmeni*

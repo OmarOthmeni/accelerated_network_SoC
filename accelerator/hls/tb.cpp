@@ -7,8 +7,16 @@
 #include "cnn.h"
 #include "weights.h"
 
+// DATA_DIR: quoted path (Makefile). DATA_DIR_RAW: unquoted path (run_hls.tcl), turned
+// into a string here because newer HLS flows (vitis-run) strip quotes from -cflags.
+#define STR_(x) #x
+#define STR(x) STR_(x)
 #ifndef DATA_DIR
+#ifdef DATA_DIR_RAW
+#define DATA_DIR STR(DATA_DIR_RAW)
+#else
 #define DATA_DIR "data"
+#endif
 #endif
 
 template <typename T>
