@@ -9,3 +9,4 @@ __pycache__/
 .Xil/
 *.jou
 *.log
+hls/libcnn.so

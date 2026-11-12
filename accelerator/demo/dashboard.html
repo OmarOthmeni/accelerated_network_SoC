@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rover CNN Live</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#16181d; --muted:#667085; --ok:#15803d; --bad:#b91c1c; --line:#e4e7ec; --accent:#1d4ed8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f1115; --card:#181b21; --text:#e7e9ee; --muted:#98a2b3; --ok:#4ade80; --bad:#f87171; --line:#2a2f38; --accent:#60a5fa; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  header { padding:16px 20px; border-bottom:1px solid var(--line); display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; }
+  header h1 { font-size:20px; margin:0; font-weight:600; }
+  header span { color:var(--muted); }
+  main { display:grid; grid-template-columns:minmax(260px,320px) 1fr; gap:16px; padding:16px 20px; max-width:1100px; }
+  @media (max-width:760px) { main { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
+  canvas { width:256px; height:256px; image-rendering:pixelated; border-radius:8px; border:1px solid var(--line); display:block; background:#000; }
+  .pred { font-size:28px; font-weight:650; margin:12px 0 2px; }
+  .truth { color:var(--muted); }
+  .ok { color:var(--ok); } .bad { color:var(--bad); }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; }
+  .stat .v { font-size:26px; font-weight:650; font-variant-numeric:tabular-nums; }
+  .stat .k { color:var(--muted); font-size:13px; }
+  .top3 { margin-top:10px; color:var(--muted); font-size:14px; }
+  .hist { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+  .hist canvas { width:56px; height:56px; border-width:3px; }
+  .hist canvas.ok { border-color:var(--ok); } .hist canvas.bad { border-color:var(--bad); }
+  button { margin-top:12px; background:transparent; color:var(--accent); border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer; }
+  #status { color:var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Rover CNN · live classification</h1>
+  <span id="backend">connecting…</span>
+  <span id="status"></span>
+</header>
+<main>
+  <section class="card">
+    <canvas id="cur" width="64" height="64"></canvas>
+    <div class="pred" id="pred">waiting for images</div>
+    <div class="truth" id="truth">start stream_client.py on your laptop</div>
+    <div class="top3" id="top3"></div>
+  </section>
+  <section>
+    <div class="card stats">
+      <div class="stat"><div class="v" id="fps">–</div><div class="k">images / s</div></div>
+      <div class="stat"><div class="v" id="hw">–</div><div class="k">accelerator ms / image (median)</div></div>
+      <div class="stat"><div class="v" id="acc">–</div><div class="k">running accuracy</div></div>
+      <div class="stat"><div class="v" id="n">0</div><div class="k">images classified</div></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="k" style="color:var(--muted);font-size:13px">last 24 images (green = correct, red = wrong)</div>
+      <div class="hist" id="hist"></div>
+      <button id="reset">reset counters</button>
+    </div>
+  </section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+function draw(canvas, b64) {
+  const raw = atob(b64), ctx = canvas.getContext("2d"), im = ctx.createImageData(64, 64);
+  for (let i = 0; i < 4096; i++) { const v = raw.charCodeAt(i); im.data[4*i] = im.data[4*i+1] = im.data[4*i+2] = v; im.data[4*i+3] = 255; }
+  ctx.putImageData(im, 0, 0);
+}
+function connect() {
+  const es = new EventSource("/events");
+  es.onopen = () => { $("status").textContent = "· live"; };
+  es.onerror = () => { $("status").textContent = "· reconnecting…"; };
+  es.onmessage = e => {
+    const m = JSON.parse(e.data);
+    if (m.type === "hello") { $("backend").textContent = m.backend; return; }
+    if (m.type !== "result") return;
+    draw($("cur"), m.img);
+    $("pred").textContent = m.pred_name;
+    $("pred").className = "pred " + (m.correct === null ? "" : (m.correct ? "ok" : "bad"));
+    $("truth").textContent = m.label_name ? (m.correct ? "✓ correct" : "✗ true class: " + m.label_name) : (m.name || "");
+    $("top3").textContent = "top 3: " + m.top3_names.join(" · ");
+    const s = m.stats;
+    $("fps").textContent = s.fps.toFixed(1);
+    $("hw").textContent = s.hw_ms_median === null ? "–" : s.hw_ms_median.toFixed(2);
+    $("acc").textContent = s.accuracy === null ? "–" : (100 * s.accuracy).toFixed(1) + "%";
+    $("n").textContent = s.images;
+    const c = document.createElement("canvas"); c.width = c.height = 64;
+    if (m.correct !== null) c.className = m.correct ? "ok" : "bad";
+    c.title = m.pred_name + (m.label_name ? " (true: " + m.label_name + ")" : "");
+    draw(c, m.img);
+    const h = $("hist"); h.prepend(c); while (h.children.length > 24) h.lastChild.remove();
+  };
+}
+$("reset").onclick = () => fetch("/reset", { method: "POST" });
+connect();
+</script>
+</body>
+</html>

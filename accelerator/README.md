@@ -24,7 +24,7 @@ Float32 and INT8 agree on the predicted class for 99.51% of test images.
 | Parameters (all INT8 weights, held in on-chip ROM) | 61,960 |
 | Operations per image | 12.4 M multiply-accumulates |
 | Parallelism | 4 / 8 / 8 / 4 output channels × 3×3 kernel per layer (36–72 MACs per cycle) |
-| Default build (low power) | 1.39 M cycles per image → **≈ 36 images/s at 50 MHz**, 0.165 W total (post-route estimate) |
+| Default build (low power) | 1.39 M cycles per image → **≈ 36 images/s at 50 MHz**; accelerator logic ≈ 0.165 W (post-route estimate, excludes ARM/DDR/board) |
 | High-throughput build | 223,200 cycles per image → ≈ 448 images/s at 100 MHz |
 | Measured throughput and power on the board | *pending Vivado bitstream + PYNQ run* |
 
@@ -40,13 +40,15 @@ programmable logic), out of context. Reports in `reports/lowpower_artix7_50MHz/`
 | LUT / FF | **7,251 / 5,055** (13.6% / 4.8% of a Zynq-7020) |
 | DSP | **54** (25% of a Zynq-7020) |
 | BRAM | 50.5 BRAM36 (36% of a Zynq-7020) |
-| Power (vectorless estimate, 25 °C) | **0.165 W total = 0.078 W dynamic + 0.087 W device static** |
+| Power of the accelerator logic (vectorless estimate, 25 °C) | **0.165 W = 0.078 W dynamic + 0.087 W device static** (not the board: see note) |
 | Dynamic power by part | BRAM 0.024 · signals 0.019 · logic 0.015 · clocks 0.011 · DSP 0.008 W |
 | Energy per image | ≈ 2.2 mJ dynamic (≈ 4.6 mJ including static) |
 
 The power figure is Vivado's vectorless estimate (default switching activity, confidence
-"medium") for the accelerator alone: it excludes the ARM cores, DDR and AXI interconnect.
-The board measurement will replace it.
+"medium") for the accelerator alone, on an Artix-7: it excludes the ARM cores, DDR, AXI
+interconnect and the rest of the board. A PYNQ-Z2 draws roughly 2–2.5 W from 5 V when idle
+(verify on the board); the meaningful board figure is the measured increase while the
+accelerator runs, and energy per image = that increase ÷ images/s.
 
 Going from 3 to 4 cyclic banks for the 3×3 window buffers was the key change for this build:
 with power-of-two map sizes, bank = index & 3 and address = index >> 2, instead of /3 and %3
@@ -80,6 +82,7 @@ hls/cnn.cpp         HLS accelerator (also plain C++), hls/tb.cpp bit-exactness t
 hls/run_hls.tcl     Vitis HLS: csim, synthesis, IP export (xc7z020clg400-1, 100 MHz)
 vivado/build_overlay.tcl  Zynq PS + accelerator block design, bitstream, reports
 pynq/run_on_board.py      runs on the board: bit-exactness, accuracy, throughput, latency
+demo/                     live demo: stream images from a laptop, classify on the board, web dashboard
 ```
 
 ### Network (designed for the hardware)

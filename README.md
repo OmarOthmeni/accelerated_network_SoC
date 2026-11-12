@@ -22,8 +22,9 @@ The repository has two parts:
 - **Verified bit-exact**: the HLS C++ kernel reproduces the Python integer model on all 1,028 test
   images (0 of 24,672 logits differ).
 - **Placed and routed** (Vivado 2026.1, Artix-7, 7-series fabric like the Zynq-7020): the default
-  low-power build runs **36 images/s at 50 MHz on 7.3k LUT, 54 DSP, 0.165 W** (vectorless
-  estimate); a high-throughput build (compile-time option) reaches ≈ 448 images/s at 100 MHz.
+  low-power build runs **36 images/s at 50 MHz on 7.3k LUT and 54 DSP**, with an estimated
+  0.165 W for the accelerator logic alone (Vivado vectorless estimate; excludes the ARM cores,
+  DDR and the rest of the board, which draws ~2–2.5 W); a high-throughput build (compile-time option) reaches ≈ 448 images/s at 100 MHz.
 - **Next**: Vivado bitstream and PYNQ board measurements (post-route resources, throughput, power). Scripts are in `accelerator/hls`, `accelerator/vivado`, `accelerator/pynq`.
 
 Details, arithmetic and reproduction steps: [`accelerator/README.md`](accelerator/README.md).
